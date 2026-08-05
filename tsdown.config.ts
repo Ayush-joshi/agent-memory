@@ -17,7 +17,7 @@ export default defineConfig({
   platform: "node",
   clean: true,
   fixedExtension: true,
-  dts: false,
+  dts: true,
   sourcemap: false,
   deps: {
     neverBundle: (id) => {
