@@ -864,3 +864,11 @@ export default function register(api: OpenClawPluginApi) {
     `startTimestamp=${pluginStartTimestamp} (${new Date(pluginStartTimestamp).toISOString()})`,
   );
 }
+
+// ============================
+// Public API Exports
+// ============================
+export * from "./src/core/index.js";
+export * from "./src/config.js";
+export { StandaloneHostAdapter } from "./src/adapters/standalone/host-adapter.js";
+export { StandaloneLLMRunnerFactory } from "./src/adapters/standalone/llm-runner.js";

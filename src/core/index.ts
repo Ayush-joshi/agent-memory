@@ -24,3 +24,7 @@ export type {
 // TdaiCore service facade
 export { TdaiCore } from "./tdai-core.js";
 export type { TdaiCoreOptions } from "./tdai-core.js";
+
+// Store & records
+export * from "./store/types.js";
+export { VectorStore } from "./store/sqlite.js";
