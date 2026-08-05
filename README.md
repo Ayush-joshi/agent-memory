@@ -2,27 +2,119 @@
 
 <img src="./assets/images/logo.png" alt="TencentDB Agent Memory" width="880" />
 
-### Agents remember,Humans innovate.
+### Agent Memory — internal hardening fork
 
-<a href="https://trendshift.io/repositories/29310?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-29310" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/29310" alt="TencentCloud%2FTencentDB-Agent-Memory | Trendshift" width="250" height="55"/></a>
-
-[![npm](https://img.shields.io/npm/v/@tencentdb-agent-memory/memory-tencentdb?color=blue)](https://www.npmjs.com/package/@tencentdb-agent-memory/memory-tencentdb)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E=22.16-brightgreen)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-%3E=2026.3.13-orange)](https://github.com/openclaw/openclaw)
 [![Hermes](https://img.shields.io/badge/Hermes-Gateway-7B61FF)](https://hermes-agent.nousresearch.com/docs/)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/dJQM6mKMF)
 
-[Highlights](#-highlights) · [Overview](#overview) · [Core Technology](#core-technology-reject-flat-storage-embrace-layering-and-symbolization) · [Features](#-features) · [Quick Start](#quick-start)
+[About This Fork](#about-this-fork) · [Security Changes](#what-this-fork-changed) · [Highlights](#-highlights) · [Architecture](#core-technology-reject-flat-storage-embrace-layering-and-symbolization) · [Quick Start](#quick-start)
 
 <div align="center">
 
-[**English**](./README.md) · [简体中文](./README_CN.md)
+[**English**](./README.md) · [Upstream Chinese documentation](./README_CN.md)
 
 </div>
 
 
 </div>
+
+---
+
+## About this fork
+
+This repository is a security-focused fork of
+[TencentDB Agent Memory](https://github.com/Tencent/TencentDB-Agent-Memory), starting
+from upstream commit `104e9d88588d506d1cd75cf7eb5957513319cad4`. It preserves
+the upstream Git history and MIT license while establishing a separately
+maintained codebase. It is not an official Tencent release and is not currently
+published as a public npm package.
+
+### What it really is
+
+Agent Memory is a persistence and context-management component for AI agents.
+It is not an agent orchestrator, authorization system, workflow engine, Slack
+application, issue tracker, or source of truth for deployments and approvals.
+
+It provides two main capabilities:
+
+1. **Layered long-term memory.** It captures raw conversations (L0), extracts
+   atomic facts (L1), groups those facts into scenario documents (L2), and
+   periodically produces a higher-level persona or operating profile (L3).
+2. **Short-term context offload.** It can move large tool results out of the
+   active model context, preserve raw evidence in files, and represent task
+   progress with compact Mermaid graphs linked back to that evidence.
+
+The default storage backend is local SQLite. Memory extraction and
+summarization still require an LLM, however, and embeddings, Tencent VectorDB,
+remote offload, and proxy modes can make outbound network requests when an
+operator configures them. **Local storage does not automatically mean zero
+network egress.**
+
+### What this fork changed
+
+The first hardening pass made these behavioral changes:
+
+| Area | Upstream behavior | Behavior in this fork |
+| :--- | :--- | :--- |
+| Package installation | A `postinstall` lifecycle hook could patch compiled OpenClaw runtime files. | The lifecycle hook was removed. Installing the package does not automatically modify OpenClaw or another package. |
+| External tracing | Optional Opik support could transmit full prompts, messages, tool results, session identifiers, and model I/O. | The Opik dependency was removed and its initialization path is forced to a no-op. |
+| Gateway authentication | Authentication was optional and an unset API key left non-health routes open. | Startup fails closed without an API key. `TDAI_GATEWAY_ALLOW_INSECURE_NO_AUTH=true` is an explicit escape hatch for isolated local development only. |
+| Request size | JSON request bodies had no application-level size limit. | JSON bodies are limited to 2 MiB and oversized requests receive HTTP 413. |
+| Error responses | Provider, filesystem, or internal errors could be returned to clients. | Unexpected failures return a generic HTTP 500 response while details remain in server logs. |
+| Dependencies | Upstream did not commit an npm lockfile. | A lockfile is committed, CI installs with `npm ci --ignore-scripts`, and dependency auditing is a CI gate. |
+| Package identity | Published upstream as `@tencentdb-agent-memory/memory-tencentdb`. | Renamed to `@internal/agent-memory`; replace this placeholder with the adopting company's internal registry scope. |
+| Package contents | The runtime patch and offload setup script were included in the npm artifact. | Those two scripts are excluded from the artifact. They remain in source and upstream history pending repository minimization. |
+
+The policy baseline is documented in
+[`INTERNAL_SECURITY.md`](./INTERNAL_SECURITY.md).
+
+### How it behaves now
+
+- Installing dependencies does not run an Agent Memory install script.
+- SQLite remains the default storage backend.
+- Automatic capture, L0→L3 extraction, hybrid recall, OpenClaw integration,
+  Hermes support, remote embeddings, Tencent VectorDB, and context offload
+  otherwise retain their upstream behavior unless described above.
+- Gateway clients must supply a valid Bearer token, except when the explicitly
+  insecure local-development override is enabled.
+- `GET /health` remains unauthenticated for orchestrator probes.
+- Metrics reporting remains local logging when explicitly enabled.
+- Memory is advisory and must never authorize a merge, deployment, access
+  grant, destructive action, or other workflow transition.
+
+### What is not cleaned up yet
+
+This is a hardened fork, not yet a minimal fork. The repository still contains
+upstream Hermes integrations, Tencent VectorDB support, migration/export
+utilities, historical bugfix and runtime-patch scripts, duplicated Chinese
+documentation and prompts, images, issue templates, and diagnostic tooling.
+Most are not executed automatically, but they increase audit and maintenance
+surface.
+
+The following enterprise controls are also not yet enforced end-to-end:
+
+- Slack workspace, tenant, repository, and work-item isolation in every stored
+  record and query;
+- outbound endpoint allow-listing;
+- comprehensive secret and PII redaction before persistence and model calls;
+- SBOM and third-party notice generation;
+- signed commits and release artifacts;
+- enterprise-specific English prompts and memory-poisoning defenses.
+
+Until those items are completed, use one isolated deployment and storage root
+per trust boundary, restrict network egress externally, and do not use this
+fork for regulated, export-controlled, production-secret, or customer data.
+
+### License and enterprise use
+
+The project is licensed under MIT. The license permits commercial and internal
+enterprise use, modification, redistribution, sublicensing, and sale, provided
+the copyright and license notice are retained. Dependencies have their own
+licenses and must be included in the adopting organization's normal open-source
+compliance process. See [`LICENSE`](./LICENSE) and `package-lock.json` for exact
+metadata. This README is operational guidance, not legal advice.
 
 ---
 
@@ -34,6 +126,10 @@
 > - **Layered long-term memory** distills fragmented conversations into structured personas and scenes, instead of flat vector piles.
 
 When integrated with OpenClaw, it cuts token usage by up to **61.38%**, improves pass rate by **51.52%** (relative), and raises PersonaMem accuracy from **48%** to **76%**.
+
+> These are upstream benchmark claims. This fork has not independently
+> reproduced or certified them; do not use them as an enterprise performance
+> or security guarantee.
 
 | Memory Capability | Benchmark | OpenClaw Success | With Plugin | Relative Δ | OpenClaw Tokens | With Plugin Tokens | Relative Δ |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -136,15 +232,24 @@ graph LR
 ### 1. OpenClaw
 ### 1.1 Install the plugin
 
+Do not install `@tencentdb-agent-memory/memory-tencentdb` when evaluating this
+fork. That is the upstream public package and has different installation and
+security behavior.
+
+Build this reviewed commit with lifecycle scripts disabled:
+
 ```bash
-openclaw plugins install @tencentdb-agent-memory/memory-tencentdb
-openclaw gateway restart
+npm ci --ignore-scripts
+npm test
+npm run build
+npm pack --ignore-scripts
 ```
 
-> Please use the native OpenClaw command to upgrade the plugin. This approach prevents the plugin from being disabled caused by semantic version ranges.
-> ```bash
-> openclaw plugins update @tencentdb-agent-memory/memory-tencentdb
-> ```
+The resulting `internal-agent-memory-<version>.tgz` must be published to an
+approved internal registry or installed through the adopting organization's
+reviewed OpenClaw plugin process. Replace the placeholder `@internal` package
+scope before publishing. Do not consume artifacts from an unreviewed upstream
+release or branch.
 
 ### 1.2 Zero-config to enable
 
@@ -189,15 +294,16 @@ Add the `slots` field so OpenClaw routes context-offload requests to this plugin
 }
 ```
 
-#### Step 2 — Apply the runtime patch
+#### Step 2 — Runtime patch status in this fork
 
-For the best results, run the patch script below. It hooks `after-tool-call` messages so they can be offloaded and recovered correctly:
+The internal package no longer runs or ships the upstream runtime patch as an
+automatic installation action. The upstream script remains in the source tree
+for provenance and review, but it is not approved for production use in this
+fork. Context-offload features that depend on patched `after-tool-call` message
+access are unsupported until integrated through a reviewed, stable host API.
 
-```bash
-bash scripts/openclaw-after-tool-call-messages.patch.sh
-```
-
-> 💡 The patch only needs to be applied once per OpenClaw installation. After upgrading OpenClaw, re-run the script to re-apply.
+Do not add this patch back to `postinstall` or apply it automatically to an
+OpenClaw installation.
 
 
 ### 2. Hermes
@@ -216,12 +322,12 @@ The Docker image bundles `hermes-agent` and the `memory_tencentdb` provider toge
 ```bash
 # ============ Configuration Parameters ============
 # MODEL_API_KEY    LLM API key (required) — replace with your own credential
-# MODEL_BASE_URL   LLM endpoint, defaults to Tencent Cloud LKE (Large Model Knowledge Engine)
+# MODEL_BASE_URL   Company-approved OpenAI-compatible LLM endpoint (required)
 # MODEL_NAME       Model name, defaults to DeepSeek-V3.2
 # MODEL_PROVIDER   Provider type: "custom" works for any OpenAI-compatible endpoint
 
 MODEL_API_KEY="your-api-key"
-MODEL_BASE_URL="https://api.lkeap.cloud.tencent.com/v1"
+MODEL_BASE_URL="https://llm.example.internal/v1"
 MODEL_NAME="deepseek-v3.2"
 MODEL_PROVIDER="custom"
 
@@ -245,7 +351,7 @@ docker run -d \
   --restart unless-stopped \
   -p 8420:8420 \
   -e MODEL_API_KEY="your-api-key" \
-  -e MODEL_BASE_URL="https://api.lkeap.cloud.tencent.com/v1" \
+  -e MODEL_BASE_URL="https://llm.example.internal/v1" \
   -e MODEL_NAME="deepseek-v3.2" \
   -e MODEL_PROVIDER="custom" \
   -v hermes_data:/opt/data \
@@ -384,16 +490,20 @@ memory:
 ```
 
 
-## 🔒 Gateway Security (optional)
+## 🔒 Gateway security
 
-The Hermes Gateway listens on `:8420` and exposes capture / search / recall HTTP endpoints. Two opt-in switches let you turn it from "open localhost sidecar" into "authenticated network service". **Both default to off so existing deployments keep working unchanged.**
+The Hermes Gateway listens on `:8420` and exposes capture, search, and recall
+HTTP endpoints. This fork requires authentication before opening a listener.
 
 | Field | env | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `server.apiKey` | `TDAI_GATEWAY_API_KEY` | _(unset)_ | When set, every route except `GET /health` requires `Authorization: Bearer <apiKey>`; missing or wrong tokens get HTTP 401. Comparison is constant-time. |
+| `server.apiKey` | `TDAI_GATEWAY_API_KEY` | _(required)_ | Every route except `GET /health` requires `Authorization: Bearer <apiKey>`; missing or wrong tokens get HTTP 401. Comparison is constant-time. |
+| `server.allowInsecureNoAuth` | `TDAI_GATEWAY_ALLOW_INSECURE_NO_AUTH` | `false` | Explicitly permits unauthenticated startup. Use only for isolated local development. |
 | `server.corsOrigins` | `TDAI_CORS_ORIGINS` (comma-separated) | `[]` | CORS allow-list. Empty list emits **no** `Access-Control-Allow-*` headers — browsers then block all cross-origin requests. Use `["*"]` only for local development. |
 
-When `apiKey` is unset, the gateway prints a startup `WARN`. If it is bound to a non-loopback host (e.g. `0.0.0.0`) without an apiKey, a second louder warning is emitted.
+When the API key is unset, startup fails unless the insecure override is
+explicitly enabled. When that override is active, the Gateway emits prominent
+warnings and must not be exposed outside a trusted local environment.
 
 Clients call protected routes with a Bearer token:
 
@@ -414,7 +524,9 @@ The Hermes `memory_tencentdb` plugin is a **client** of the Gateway. To make it 
 export MEMORY_TENCENTDB_GATEWAY_API_KEY="<same-secret-as-gateway>"
 ```
 
-The plugin will then attach `Authorization: Bearer <key>` to every request it sends to the Gateway. If the variable is unset, the plugin sends no auth header — which matches the Gateway's legacy default and is fine for a Gateway that has not opted into `TDAI_GATEWAY_API_KEY`.
+The plugin attaches `Authorization: Bearer <key>` to every request it sends to
+the Gateway. If the variable is unset, it sends no auth header and protected
+Gateway requests will be rejected.
 
 Important: the plugin only handles the **client half**. Whether the Gateway actually enforces a Bearer check is decided on the Gateway side (`TDAI_GATEWAY_API_KEY` / `server.apiKey`). Configure the same secret on both ends — the plugin does not propagate the secret across, since the Gateway might be started by Docker, systemd, or any other means outside the plugin's control.
 
@@ -425,7 +537,10 @@ If `MEMORY_TENCENTDB_GATEWAY_API_KEY` is unset, the plugin also looks at `TDAI_G
 
 ## 🔧 Configurable Parameters
 
-**Every field has a sensible default — it runs with zero configuration.** When you want to tune, peel back the layers based on how deep you go.
+The OpenClaw plugin retains upstream defaults for most fields. The standalone
+Gateway is intentionally not zero-configuration in this fork: it requires an
+API key unless the explicit insecure local-development override is enabled.
+Review all outbound endpoint settings before deployment.
 
 <details>
 <summary><b>🟢 Level 1 · Daily tuning</b> (covers 90% of use cases)</summary>
@@ -520,7 +635,7 @@ Debugging no longer means probing an opaque database — it becomes a determinis
 
 **All of these layered memory artifacts live under `~/.openclaw/memory-tdai/` — feel free to open the directory and inspect each layer for yourself.**
 
-### 3. Production-Ready Engineering: Not a Demo
+### 3. Upstream integration capabilities
 
 | Capability | Description |
 | :--- | :--- |
