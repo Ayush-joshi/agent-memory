@@ -46,6 +46,7 @@ import type { SeedProgress } from "../core/seed/types.js";
 
 const TAG = "[tdai-gateway]";
 const VERSION = "0.1.0";
+const MAX_JSON_BODY_BYTES = 2 * 1024 * 1024;
 
 // ============================
 // Console logger (for standalone gateway — no OpenClaw logger available)
@@ -67,8 +68,29 @@ function createConsoleLogger(): Logger {
 async function parseJsonBody<T>(req: http.IncomingMessage): Promise<T> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    let received = 0;
+    let rejected = false;
+
+    const declaredLength = Number(req.headers["content-length"] ?? 0);
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) {
+      reject(new RequestBodyTooLargeError());
+      req.resume();
+      return;
+    }
+
+    req.on("data", (chunk: Buffer) => {
+      if (rejected) return;
+      received += chunk.length;
+      if (received > MAX_JSON_BODY_BYTES) {
+        rejected = true;
+        chunks.length = 0;
+        reject(new RequestBodyTooLargeError());
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on("end", () => {
+      if (rejected) return;
       try {
         const body = Buffer.concat(chunks).toString("utf-8");
         resolve(JSON.parse(body) as T);
@@ -78,6 +100,13 @@ async function parseJsonBody<T>(req: http.IncomingMessage): Promise<T> {
     });
     req.on("error", reject);
   });
+}
+
+class RequestBodyTooLargeError extends Error {
+  constructor() {
+    super(`JSON request body exceeds ${MAX_JSON_BODY_BYTES} bytes`);
+    this.name = "RequestBodyTooLargeError";
+  }
 }
 
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
@@ -142,6 +171,13 @@ export class TdaiGateway {
    * Start the Gateway HTTP server.
    */
   async start(): Promise<void> {
+    if (!this.config.server.apiKey && !this.config.server.allowInsecureNoAuth) {
+      throw new Error(
+        "Gateway authentication is required. Set TDAI_GATEWAY_API_KEY, or set " +
+        "TDAI_GATEWAY_ALLOW_INSECURE_NO_AUTH=true only for isolated local development.",
+      );
+    }
+
     // Initialize data directories
     initDataDirectories(this.config.data.baseDir);
 
@@ -177,7 +213,7 @@ export class TdaiGateway {
    *   3. Never log the key itself.
    */
   private logSecurityPosture(): void {
-    const { host, apiKey, corsOrigins } = this.config.server;
+    const { host, apiKey, corsOrigins, allowInsecureNoAuth } = this.config.server;
     const authOn = !!apiKey;
     const loopback = host === "127.0.0.1" || host === "localhost" || host === "::1";
 
@@ -188,11 +224,9 @@ export class TdaiGateway {
 
     if (!authOn) {
       this.logger.warn(
-        "TDAI_GATEWAY_API_KEY is NOT set — all routes except GET /health are " +
-        "open to anyone who can reach this port. This is the legacy default. " +
-        "Set TDAI_GATEWAY_API_KEY (or server.apiKey in tdai-gateway.yaml) and " +
-        "pass `Authorization: Bearer <key>` from clients before exposing the " +
-        "gateway beyond the loopback interface."
+        "Gateway authentication is disabled by the explicit " +
+        `allowInsecureNoAuth=${allowInsecureNoAuth} development override. ` +
+        "All routes except GET /health are open to anyone who can reach this port."
       );
     }
     if (!loopback && !authOn) {
@@ -278,7 +312,15 @@ export class TdaiGateway {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Request error [${method} ${pathname}]: ${msg}`);
-      sendError(res, 500, msg);
+      if (err instanceof RequestBodyTooLargeError) {
+        sendError(res, 413, "Request body too large");
+      } else if (msg === "Invalid JSON body") {
+        sendError(res, 400, "Invalid JSON body");
+      } else {
+        // Do not disclose filesystem paths, endpoint details, stack content,
+        // or provider errors to remote clients. Full details remain in logs.
+        sendError(res, 500, "Internal server error");
+      }
     }
   }
 

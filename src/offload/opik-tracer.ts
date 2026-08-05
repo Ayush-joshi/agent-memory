@@ -1,9 +1,17 @@
 /**
- * Opik observability tracer for context offload plugin.
- * Wraps the opik npm package with graceful degradation when not installed.
+ * External content tracing is intentionally disabled in the internal fork.
+ *
+ * The upstream implementation could submit complete prompts, messages, tool
+ * results, session identifiers, and model I/O to an Opik endpoint. These
+ * exported no-op functions preserve internal call sites without allowing
+ * conversation or source-code content to leave the trust boundary through an
+ * observability integration.
  */
 import type { PluginLogger } from "./types.js";
 import { getEnv } from "../utils/env.js";
+// SECURITY: Do not add an HTTP client or environment-based tracing activation
+// here. Metadata-only enterprise telemetry belongs behind a separately
+// reviewed HostAdapter implementation.
 
 // Opik client types (minimal shape to avoid hard dependency)
 interface OpikClient {
@@ -85,39 +93,13 @@ function getOpikConfigFromOpenClawConfig(config: Record<string, unknown>): {
 }
 
 export function initOffloadOpikTracer(
-  openClawConfig: Record<string, unknown>,
+  _openClawConfig: Record<string, unknown>,
   logger: PluginLogger,
 ): void {
-  if (tracerInitTried) return;
   tracerInitTried = true;
-  try {
-    const cfg = getOpikConfigFromOpenClawConfig(openClawConfig);
-    if (!cfg.enabled) return;
-    // Dynamic import — graceful when opik is not installed
-    let OpikConstructor: new (params: Record<string, unknown>) => OpikClient;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const opikModule = require("opik") as { Opik: new (params: Record<string, unknown>) => OpikClient };
-      OpikConstructor = opikModule.Opik;
-    } catch {
-      logger.debug?.("[context-offload] opik package not available, tracer disabled");
-      return;
-    }
-    client = new OpikConstructor({
-      ...(cfg.apiKey ? { apiKey: cfg.apiKey } : {}),
-      ...(cfg.apiUrl ? { apiUrl: cfg.apiUrl } : {}),
-      workspaceName: cfg.workspaceName,
-      projectName: cfg.projectName,
-    });
-    tracerEnabled = true;
-    logger.debug?.(
-      `[context-offload] Opik tracer enabled: project=${cfg.projectName}, workspace=${cfg.workspaceName}`,
-    );
-  } catch (err) {
-    tracerEnabled = false;
-    client = null;
-    logger.debug?.(`[context-offload] Opik tracer init failed: ${String(err)}`);
-  }
+  tracerEnabled = false;
+  client = null;
+  logger.debug?.("[context-offload] external content tracing disabled by internal security policy");
 }
 
 export function traceOffloadDecision(params: {

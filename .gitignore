@@ -29,9 +29,8 @@ benchmark-runs/
 .codebuddy
 .ai_assets
 
-# Dev-only scripts & lockfile (not shipped in MR)
+# Dev-only scripts
 install-plugin.sh
-package-lock.json
 pnpm-lock.yaml
 yarn.lock
 test-offload.sh

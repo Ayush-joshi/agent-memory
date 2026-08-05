@@ -42,6 +42,11 @@ export interface GatewayConfig {
      */
     apiKey?: string;
     /**
+     * Explicit local-development escape hatch for running without auth.
+     * Defaults to false. Production deployments must never enable it.
+     */
+    allowInsecureNoAuth: boolean;
+    /**
      * Optional CORS allow-list.
      *
      * When empty (default), the gateway sends **no** `Access-Control-Allow-*`
@@ -117,6 +122,10 @@ export function loadGatewayConfig(overrides?: Partial<GatewayConfig>): GatewayCo
   // change (open v1 routes, permissive CORS *will not* be re-introduced — see
   // resolveCorsOrigins below: empty list means "send no CORS headers").
   const apiKey = env("TDAI_GATEWAY_API_KEY") ?? str(serverConfig, "apiKey");
+  const allowInsecureNoAuth =
+    envBool("TDAI_GATEWAY_ALLOW_INSECURE_NO_AUTH") ??
+    bool(serverConfig, "allowInsecureNoAuth") ??
+    false;
   const corsOrigins = resolveCorsOrigins(serverConfig);
 
   // Data config (expand leading ~ to $HOME so Node.js fs/path can resolve it)
@@ -143,7 +152,7 @@ export function loadGatewayConfig(overrides?: Partial<GatewayConfig>): GatewayCo
   const memory = parseMemoryConfig(memoryRaw as Record<string, unknown> | undefined);
 
   const base: GatewayConfig = {
-    server: { port, host, apiKey, corsOrigins },
+    server: { port, host, apiKey, allowInsecureNoAuth, corsOrigins },
     data: { baseDir },
     llm,
     memory,
@@ -237,6 +246,14 @@ function envInt(key: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function envBool(key: string): boolean | undefined {
+  const raw = env(key)?.toLowerCase();
+  if (raw === undefined) return undefined;
+  if (raw === "true" || raw === "1") return true;
+  if (raw === "false" || raw === "0") return false;
+  throw new Error(`${key} must be true/false or 1/0`);
+}
+
 /**
  * Read an env var that may be a boolean ("true"/"false"/"1"/"0")
  * or a plain string (strategy name like "deepseek", "anthropic").
@@ -272,6 +289,11 @@ function str(src: Record<string, unknown>, key: string): string | undefined {
 function num(src: Record<string, unknown>, key: string): number | undefined {
   const v = src[key];
   return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+function bool(src: Record<string, unknown>, key: string): boolean | undefined {
+  const value = src[key];
+  return typeof value === "boolean" ? value : undefined;
 }
 
 /**

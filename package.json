@@ -1,5 +1,5 @@
 {
-  "name": "@tencentdb-agent-memory/memory-tencentdb",
+  "name": "@internal/agent-memory",
   "version": "0.3.6",
   "description": "Four-layer local memory system plugin for OpenClaw — auto-captures, structures, and profiles conversational knowledge using local LLM + SQLite vector search (L0→L1→L2→L3 pipeline)",
   "type": "module",
@@ -28,8 +28,7 @@
     "read-local-memory": "node ./bin/read-local-memory.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "postinstall": "node scripts/postinstall.mjs"
+    "test:coverage": "vitest run --coverage"
   },
   "files": [
     "dist/",
@@ -41,14 +40,12 @@
     "scripts/memory-tencentdb-ctl.sh",
     "scripts/install_hermes_memory_tencentdb.sh",
     "scripts/setup-hermes-memory-tencentdb.bat",
-    "scripts/postinstall.mjs",
     "scripts/README.memory-tencentdb-ctl.md",
     "src",
-    "scripts/openclaw-after-tool-call-messages.patch.sh",
-    "scripts/setup-offload.sh",
     "hermes-plugin/",
     "openclaw.plugin.json",
     "README.md",
+    "INTERNAL_SECURITY.md",
     "CHANGELOG.md",
     "LICENSE",
     "!src/**/*.test.ts",
@@ -87,8 +84,10 @@
     "yaml": "^2.8.3",
     "zod": "^4.4.3"
   },
-  "optionalDependencies": {
-    "opik": "^1.0.0"
+  "overrides": {
+    "@ai-sdk/provider-utils": {
+      "undici": "6.28.0"
+    }
   },
   "peerDependencies": {
     "node-llama-cpp": "^3.16.2",
