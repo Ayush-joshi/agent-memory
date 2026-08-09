@@ -2,9 +2,10 @@
 
 <img src="./assets/images/logo.png" alt="TencentDB Agent Memory" width="880" />
 
-### Agent Memory — internal hardening fork
+### Agent Memory — independently maintained hardening fork
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/dev-agent-memory?color=blue)](https://www.npmjs.com/package/dev-agent-memory)
 [![Node](https://img.shields.io/badge/node-%3E=22.16-brightgreen)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-%3E=2026.3.13-orange)](https://github.com/openclaw/openclaw)
 [![Hermes](https://img.shields.io/badge/Hermes-Gateway-7B61FF)](https://hermes-agent.nousresearch.com/docs/)
@@ -28,8 +29,8 @@ This repository is a security-focused fork of
 [TencentDB Agent Memory](https://github.com/Tencent/TencentDB-Agent-Memory), starting
 from upstream commit `104e9d88588d506d1cd75cf7eb5957513319cad4`. It preserves
 the upstream Git history and MIT license while establishing a separately
-maintained codebase. It is not an official Tencent release and is not currently
-published as a public npm package.
+maintained codebase. It is not an official Tencent release. This fork is
+distributed as [`dev-agent-memory`](https://www.npmjs.com/package/dev-agent-memory).
 
 ### What it really is
 
@@ -64,7 +65,7 @@ The first hardening pass made these behavioral changes:
 | Request size | JSON request bodies had no application-level size limit. | JSON bodies are limited to 2 MiB and oversized requests receive HTTP 413. |
 | Error responses | Provider, filesystem, or internal errors could be returned to clients. | Unexpected failures return a generic HTTP 500 response while details remain in server logs. |
 | Dependencies | Upstream did not commit an npm lockfile. | A lockfile is committed, CI installs with `npm ci --ignore-scripts`, and dependency auditing is a CI gate. |
-| Package identity | Published upstream as `@tencentdb-agent-memory/memory-tencentdb`. | Renamed to `@internal/agent-memory`; replace this placeholder with the adopting company's internal registry scope. |
+| Package identity | Published upstream as `@tencentdb-agent-memory/memory-tencentdb`. | Published independently as `dev-agent-memory`. |
 | Package contents | The runtime patch and offload setup script were included in the npm artifact. | Those two scripts are excluded from the artifact. They remain in source and upstream history pending repository minimization. |
 
 The policy baseline is documented in
@@ -236,7 +237,13 @@ Do not install `@tencentdb-agent-memory/memory-tencentdb` when evaluating this
 fork. That is the upstream public package and has different installation and
 security behavior.
 
-Build this reviewed commit with lifecycle scripts disabled:
+Install this fork from npm:
+
+```bash
+openclaw plugins install dev-agent-memory
+```
+
+To verify a source checkout before publishing or installing its tarball:
 
 ```bash
 npm ci --ignore-scripts
@@ -245,11 +252,9 @@ npm run build
 npm pack --ignore-scripts
 ```
 
-The resulting `internal-agent-memory-<version>.tgz` must be published to an
-approved internal registry or installed through the adopting organization's
-reviewed OpenClaw plugin process. Replace the placeholder `@internal` package
-scope before publishing. Do not consume artifacts from an unreviewed upstream
-release or branch.
+The resulting `dev-agent-memory-<version>.tgz` can be installed through
+the adopting organization's reviewed OpenClaw plugin process. Do not consume
+artifacts from an unreviewed upstream release or branch.
 
 ### 1.2 Zero-config to enable
 
@@ -296,7 +301,7 @@ Add the `slots` field so OpenClaw routes context-offload requests to this plugin
 
 #### Step 2 — Runtime patch status in this fork
 
-The internal package no longer runs or ships the upstream runtime patch as an
+This package no longer runs or ships the upstream runtime patch as an
 automatic installation action. The upstream script remains in the source tree
 for provenance and review, but it is not approved for production use in this
 fork. Context-offload features that depend on patched `after-tool-call` message
@@ -377,8 +382,8 @@ mkdir -p ~/.memory-tencentdb
 TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"
 npm init -y --silent
-npm install @tencentdb-agent-memory/memory-tencentdb@latest --omit=dev
-cp -r node_modules/@tencentdb-agent-memory/memory-tencentdb \
+npm install dev-agent-memory@latest --omit=dev
+cp -r node_modules/dev-agent-memory \
       ~/.memory-tencentdb/tdai-memory-openclaw-plugin
 rm -rf "$TEMP_DIR"
 ```

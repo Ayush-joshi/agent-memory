@@ -7,7 +7,7 @@
 
 <a href="https://trendshift.io/repositories/29310?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-29310" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/29310" alt="TencentCloud%2FTencentDB-Agent-Memory | Trendshift" width="250" height="55"/></a>
 
-[![npm](https://img.shields.io/npm/v/@tencentdb-agent-memory/memory-tencentdb?color=blue)](https://www.npmjs.com/package/@tencentdb-agent-memory/memory-tencentdb)
+[![npm](https://img.shields.io/npm/v/dev-agent-memory?color=blue)](https://www.npmjs.com/package/dev-agent-memory)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E=22.16-brightgreen)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-%3E=2026.3.13-orange)](https://github.com/openclaw/openclaw)
@@ -140,13 +140,13 @@ graph LR
 ### 1.1 安装插件
 
 ```bash
-openclaw plugins install @tencentdb-agent-memory/memory-tencentdb
+openclaw plugins install dev-agent-memory
 openclaw gateway restart
 ```
 
 > 升级插件请优先使用 OpenClaw 原生更新命令，该方式可以避免因语义化版本范围导致插件禁用：
 > ```bash
-> openclaw plugins update @tencentdb-agent-memory/memory-tencentdb
+> openclaw plugins update dev-agent-memory
 > ```
 
 ### 1.2 零配置启用
@@ -275,8 +275,8 @@ mkdir -p ~/.memory-tencentdb
 TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"
 npm init -y --silent
-npm install @tencentdb-agent-memory/memory-tencentdb@latest --omit=dev
-cp -r node_modules/@tencentdb-agent-memory/memory-tencentdb \
+npm install dev-agent-memory@latest --omit=dev
+cp -r node_modules/dev-agent-memory \
       ~/.memory-tencentdb/tdai-memory-openclaw-plugin
 rm -rf "$TEMP_DIR"
 ```

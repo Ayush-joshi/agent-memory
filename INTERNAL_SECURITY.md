@@ -1,18 +1,18 @@
-# Internal security baseline
+# Security baseline
 
-This repository is an internally maintained fork of TencentDB Agent Memory.
+This repository is an independently maintained fork of TencentDB Agent Memory.
 The fork starts from upstream commit `104e9d88588d506d1cd75cf7eb5957513319cad4`.
 
-The upstream project is useful prior art, but upstream releases and public npm
-artifacts are not approved production inputs. Production artifacts must be
-built from a reviewed commit in this repository and published through the
-company's internal artifact registry.
+The upstream project is useful prior art, but its release artifacts are not
+interchangeable with this fork. Production use should pin a reviewed release
+of `dev-agent-memory` and follow the adopting organization's artifact
+approval process.
 
 ## Security invariants
 
 1. Package installation must not modify OpenClaw, another dependency, or any
    host-runtime files. The upstream `postinstall` runtime patch is not part of
-   the internal package lifecycle.
+   this package's lifecycle.
 2. Conversation, tool, prompt, source-code, and memory content must not be sent
    to an observability vendor. The upstream optional Opik integration is
    disabled in this fork.
@@ -28,7 +28,7 @@ company's internal artifact registry.
 7. Memory is advisory. It must never authorize a merge, deployment, approval,
    access grant, destructive action, or other workflow state transition.
 8. Dependencies must be locked, scanned, represented in an SBOM, and obtained
-   from the internal registry in CI and production.
+   through an approved registry in CI and production.
 
 ## Data handled by this component
 
