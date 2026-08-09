@@ -1,10 +1,12 @@
 # Changelog
 
-本文件记录 `@tencentdb-agent-memory/memory-tencentdb` 插件的所有显著变更，格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/)。
+本文件记录 `dev-agent-memory` 插件的所有显著变更，格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/)。`0.3.6` 及更早版本的记录来自上游项目历史。
 
 ---
 
 ## [Unreleased]
+
+## [0.4.0] - 2026-08-09
 
 ### ✨ 新功能
 

@@ -3,7 +3,7 @@
 # install_memory_tencentdb.sh
 #
 # 在 install_hermes_ubuntu.sh 之后执行，用于：
-#   1. 通过 npm 下载 @tencentdb-agent-memory/memory-tencentdb@latest 到
+#   1. 通过 npm 下载 dev-agent-memory@latest 到
 #      $MEMORY_TENCENTDB_ROOT/tdai-memory-openclaw-plugin（默认 ~/.memory-tencentdb/tdai-memory-openclaw-plugin）
 #   2. 安装 Gateway 的 Node.js 依赖（npm install）
 #   3. 配置 hermes config.yaml 使用 memory_tencentdb 记忆提供者
@@ -47,7 +47,7 @@ USERNAME="${INSTALL_AS_USER:-${SUDO_USER:-$(whoami)}}"
 USER_HOME=$(eval echo ~$USERNAME)
 
 # npm 包名
-NPM_PACKAGE="@tencentdb-agent-memory/memory-tencentdb@latest"
+NPM_PACKAGE="dev-agent-memory@latest"
 
 # Hermes 路径
 HERMES_HOME="$USER_HOME/.hermes"
@@ -174,8 +174,8 @@ cd "$TEMP_DOWNLOAD"
 npm init -y --silent > /dev/null 2>&1
 npm install "$NPM_PACKAGE" --omit=dev 2>&1 | tail -5
 
-# 包安装后位于 node_modules/@tencentdb-agent-memory/memory-tencentdb
-PACK_DIR="$TEMP_DOWNLOAD/node_modules/@tencentdb-agent-memory/memory-tencentdb"
+# 包安装后位于 node_modules/dev-agent-memory
+PACK_DIR="$TEMP_DOWNLOAD/node_modules/dev-agent-memory"
 
 if [ ! -d "$PACK_DIR" ]; then
     echo "[ERROR] Downloaded package directory not found at $PACK_DIR"

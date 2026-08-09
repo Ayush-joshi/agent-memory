@@ -48,13 +48,13 @@
 ### 3.1 从 npm 包里直接运行（无需任何配置）
 
 ```bash
-npm install @tencentdb-agent-memory/memory-tencentdb
+npm install dev-agent-memory
 
 # 项目内安装，路径可由 npm root 动态算出
-"$(npm root)/@tencentdb-agent-memory/memory-tencentdb/scripts/memory-tencentdb-ctl.sh" --help
+"$(npm root)/dev-agent-memory/scripts/memory-tencentdb-ctl.sh" --help
 
 # 全局安装则用 npm root -g
-"$(npm root -g)/@tencentdb-agent-memory/memory-tencentdb/scripts/memory-tencentdb-ctl.sh" --help
+"$(npm root -g)/dev-agent-memory/scripts/memory-tencentdb-ctl.sh" --help
 ```
 
 `npm root` / `npm root -g` 会在所有包管理器（npm / pnpm / yarn）和不同的 prefix 配置下返回正确目录，避免硬编码 `node_modules/` 路径。适合一次性、临时使用的场景。
@@ -72,10 +72,10 @@ SCRIPT="$(git -C "$(git rev-parse --show-toplevel)" ls-files | \
 SCRIPT="$(git rev-parse --show-toplevel)/$SCRIPT"
 
 # (b) 从已 npm 全局安装的包
-SCRIPT="$(npm root -g)/@tencentdb-agent-memory/memory-tencentdb/scripts/memory-tencentdb-ctl.sh"
+SCRIPT="$(npm root -g)/dev-agent-memory/scripts/memory-tencentdb-ctl.sh"
 
 # (c) 从项目本地的 node_modules
-SCRIPT="$(npm root)/@tencentdb-agent-memory/memory-tencentdb/scripts/memory-tencentdb-ctl.sh"
+SCRIPT="$(npm root)/dev-agent-memory/scripts/memory-tencentdb-ctl.sh"
 
 # (d) 完全手写绝对路径（如部署到非标准位置）
 SCRIPT="/opt/tdai/scripts/memory-tencentdb-ctl.sh"
@@ -241,7 +241,7 @@ hermes
 # 1) 安装
 #    INSTALL_SCRIPT 的取值方式见上文 3.2 节（git rev-parse / npm root / 手填均可）
 #    例如从 git 仓库根：INSTALL_SCRIPT="$(git rev-parse --show-toplevel)/scripts/install_hermes_memory_tencentdb.sh"
-#         从 npm 全局：  INSTALL_SCRIPT="$(npm root -g)/@tencentdb-agent-memory/memory-tencentdb/scripts/install_hermes_memory_tencentdb.sh"
+#         从 npm 全局：  INSTALL_SCRIPT="$(npm root -g)/dev-agent-memory/scripts/install_hermes_memory_tencentdb.sh"
 bash "$INSTALL_SCRIPT"
 
 # 2) 只配 Gateway 所需凭据

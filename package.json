@@ -1,14 +1,14 @@
 {
-  "name": "@internal/agent-memory",
-  "version": "0.3.6",
+  "name": "dev-agent-memory",
+  "version": "0.4.0",
   "description": "Four-layer local memory system plugin for OpenClaw — auto-captures, structures, and profiles conversational knowledge using local LLM + SQLite vector search (L0→L1→L2→L3 pipeline)",
   "type": "module",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "bin": {
-    "migrate-sqlite-to-tcvdb": "./bin/migrate-sqlite-to-tcvdb.mjs",
-    "export-tencent-vdb": "./bin/export-tencent-vdb.mjs",
-    "read-local-memory": "./bin/read-local-memory.mjs"
+    "migrate-sqlite-to-tcvdb": "bin/migrate-sqlite-to-tcvdb.mjs",
+    "export-tencent-vdb": "bin/export-tencent-vdb.mjs",
+    "read-local-memory": "bin/read-local-memory.mjs"
   },
   "exports": {
     ".": {
@@ -22,7 +22,8 @@
     "prepare": "npm run build",
     "build:plugin": "tsdown",
     "build:scripts": "npm run build:migrate-sqlite-to-vdb && npm run build:export-tencent-vdb && npm run build:read-local-memory",
-    "prepack": "npm run build",
+    "prepublishOnly": "npm audit --audit-level=high && npm test",
+    "release:check": "npm audit --audit-level=high && npm test && npm pack --dry-run",
     "build:migrate-sqlite-to-vdb": "tsc -p scripts/migrate-sqlite-to-tcvdb/tsconfig.json --noEmitOnError false",
     "migrate-sqlite-to-tcvdb": "node ./bin/migrate-sqlite-to-tcvdb.mjs",
     "build:export-tencent-vdb": "tsc --project scripts/export-tencent-vdb/tsconfig.json",
@@ -51,9 +52,14 @@
     "INTERNAL_SECURITY.md",
     "CHANGELOG.md",
     "LICENSE",
+    "assets/images/logo.png",
+    "assets/images/memory-pyramid-en.jpg",
+    "assets/images/flowchart1.png",
+    "assets/images/star-helper.png",
     "!src/**/*.test.ts",
     "!src/**/*.spec.ts",
-    "!src/**/__tests__/"
+    "!src/**/__tests__/",
+    "!hermes-plugin/**/tests/"
   ],
   "keywords": [
     "openclaw",
@@ -69,8 +75,19 @@
     "scene-extraction",
     "embedding"
   ],
-  "author": "TencentDB Agent Memory Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ayush-joshi/agent-memory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ayush-joshi/agent-memory/issues"
+  },
+  "homepage": "https://github.com/Ayush-joshi/agent-memory#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "engines": {
     "node": ">=22.16.0"
   },
