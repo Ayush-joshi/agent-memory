@@ -6,6 +6,13 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-09
+
+### 🔒 安全
+
+- 升级到 AI SDK 7 及 OpenAI provider 4，使下游消费者解析到已修复的 `undici` 依赖；移除仅对本仓库生效、无法保护 npm 消费者的 root `overrides`。
+- 新增 `npm run consumer:check`，将待发布 tarball 安装到干净消费者项目后执行 high-severity audit，并纳入 CI 和发布前检查。
+
 ## [0.4.0] - 2026-08-09
 
 ### ✨ 新功能

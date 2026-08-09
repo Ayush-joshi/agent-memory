@@ -1,6 +1,6 @@
 {
   "name": "dev-agent-memory",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Four-layer local memory system plugin for OpenClaw — auto-captures, structures, and profiles conversational knowledge using local LLM + SQLite vector search (L0→L1→L2→L3 pipeline)",
   "type": "module",
   "main": "./dist/index.mjs",
@@ -22,8 +22,9 @@
     "prepare": "npm run build",
     "build:plugin": "tsdown",
     "build:scripts": "npm run build:migrate-sqlite-to-vdb && npm run build:export-tencent-vdb && npm run build:read-local-memory",
-    "prepublishOnly": "npm audit --audit-level=high && npm test",
-    "release:check": "npm audit --audit-level=high && npm test && npm pack --dry-run",
+    "prepublishOnly": "npm audit --audit-level=high && npm test && npm run consumer:check",
+    "release:check": "npm audit --audit-level=high && npm test && npm run consumer:check && npm pack --dry-run",
+    "consumer:check": "node scripts/check-consumer-security.mjs",
     "build:migrate-sqlite-to-vdb": "tsc -p scripts/migrate-sqlite-to-tcvdb/tsconfig.json --noEmitOnError false",
     "migrate-sqlite-to-tcvdb": "node ./bin/migrate-sqlite-to-tcvdb.mjs",
     "build:export-tencent-vdb": "tsc --project scripts/export-tencent-vdb/tsconfig.json",
@@ -92,10 +93,10 @@
     "node": ">=22.16.0"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.53",
+    "@ai-sdk/openai": "^4.0.36",
     "@node-rs/jieba": "^2.0.1",
     "@tencentdb-agent-memory/tcvdb-text": "^0.1.1",
-    "ai": "^6.0.164",
+    "ai": "^7.0.58",
     "js-tiktoken": "^1.0.18",
     "json5": "^2.2.3",
     "sqlite-vec": "0.1.7-alpha.2",
@@ -103,11 +104,6 @@
     "undici": "^8.1.0",
     "yaml": "^2.8.3",
     "zod": "^4.4.3"
-  },
-  "overrides": {
-    "@ai-sdk/provider-utils": {
-      "undici": "6.28.0"
-    }
   },
   "peerDependencies": {
     "node-llama-cpp": "^3.16.2",

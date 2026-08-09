@@ -34,6 +34,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Clean-consumer security audit
+        run: npm run consumer:check
+
   # ── 2. Pack validation ─────────────────────────────────────
   pack:
     name: Pack
